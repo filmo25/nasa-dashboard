@@ -155,29 +155,3 @@ CREATE TABLE IF NOT EXISTS updates (
     projects_updated INTEGER NOT NULL DEFAULT 0,
     projects_deleted INTEGER NOT NULL DEFAULT 0
 );
-
-
--- ============================================================
--- INDEXES
--- ============================================================
-
-CREATE INDEX IF NOT EXISTS idx_projects_status
-    ON projects(status_id);
-
-CREATE INDEX IF NOT EXISTS idx_projects_start_date
-    ON projects(start_date);
-
-CREATE INDEX IF NOT EXISTS idx_projects_end_date
-    ON projects(end_date);
-
-CREATE INDEX IF NOT EXISTS idx_projects_last_updated
-    ON projects(last_updated);
-
-CREATE INDEX IF NOT EXISTS idx_pj_tech_technology
-    ON pj_tech(technology_id);
-
-CREATE INDEX IF NOT EXISTS idx_pj_states_state
-    ON pj_states(state_id);
-
-CREATE INDEX IF NOT EXISTS idx_pj_dest_destination
-    ON pj_dest(destination_id);

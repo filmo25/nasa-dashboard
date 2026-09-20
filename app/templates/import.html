@@ -2,132 +2,18 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0">
-
-    <title>NASA Technologies Analyzer</title>
-
-    <link
-        rel="stylesheet"
-        href="{{ url_for('static', filename='styles/style.css') }}">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NASA TechPort Import</title>
     <script
         src="{{ url_for('static', filename='js/import.js') }}"
         defer>
     </script>
 </head>
-
 <body>
-
-<main>
-
-    <header>
-        <h1>NASA technologies analyzer</h1>
-
-        <p>
-            This application imports from a public NASA dataset
-            the most mediatic relevant NASA projects for NASA programs.
-        </p>
-    </header>
-
-
-    <section>
-
-        <h2>Database information</h2>
-
-        <p>
-            Database creation date:
-            <span id="database-creation-date">
-                {{ database_creation_date or "—" }}
-            </span>
-        </p>
-
-    </section>
-
-
-    <section>
-
-        <h2>Projects synchronization</h2>
-
-        <p>
-            Projects added:
-            <strong id="projects-added">
-                {{ projects_added }}
-            </strong>
-        </p>
-
-        <p>
-            Projects updated:
-            <strong id="projects-updated">
-                {{ projects_updated }}
-            </strong>
-        </p>
-
-        <p>
-            Projects deleted:
-            <strong id="projects-deleted">
-                {{ projects_deleted }}
-            </strong>
-        </p>
-
-    </section>
-
-
-    <section id="actions">
-
-        {% if has_projects %}
-
-            <button
-                id="import-projects-btn"
-                type="button"
-                hidden>
-                Import NASA projects
-            </button>
-
-            <button
-                id="delete-projects-btn"
-                type="button">
-                Delete NASA projects
-            </button>
-
-            <button
-                id="analyze-projects-btn"
-                type="button">
-                Analyze NASA projects
-            </button>
-
-        {% else %}
-
-            <button
-                id="import-projects-btn"
-                type="button">
-                Import NASA projects
-            </button>
-
-            <button
-                id="delete-projects-btn"
-                type="button">
-                Delete NASA projects
-            </button>
-
-            <button
-                id="analyze-projects-btn"
-                type="button"
-                hidden>
-                Analyze NASA projects
-            </button>
-
-        {% endif %}
-
-        <p
-            id="import-status"
-            aria-live="polite">
-        </p>
-
-    </section>
-
-</main>
+    <p>NASA technologies analyzer<p>
+    
+    <button id="import-btn">Import Projects</button>
+    <div id="results"></div>
 
 </body>
 </html>
