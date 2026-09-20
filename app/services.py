@@ -1,5 +1,5 @@
-# from db import db
-# import client
+from db import db
+import client
 
 def import_projects():
     """
@@ -7,14 +7,14 @@ def import_projects():
     the insertion of that data into the local SQLite database.
     """
     # 1. Initialize DB
-    # db.create_db()
+    db.create_db()
     
     # 2. Fetch Data
-    # attributes = client.fetch_nasa_pjs_attributes()
+    attributes = client.fetch_nasa_pjs_attributes()
     # projects = client.fetch_nasa_relevant_projects()
     
-    # 3. Populate DB
-    # db.populate_db(attributes, projects)
+    # 3. Populate attributes in DB
+    db.populate_attributes_tables(attributes)
     
     # 4. Return Results (Stubbed for testing)
     # rows_added = count_projects_rows() 

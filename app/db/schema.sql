@@ -1,11 +1,11 @@
 PRAGMA foreign_keys = ON;
 
 -- ============================================================
--- STATUS
+-- STATUSES
 -- ============================================================
 
-CREATE TABLE IF NOT EXISTS status (
-    id INTEGER PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS statuses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE
 );
 
@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS technologies (
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS states (
-    id INTEGER PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE
 );
 
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS states (
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS destinations (
-    id INTEGER PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE
 );
 
@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS projects (
     last_updated TEXT,
 
     FOREIGN KEY (status_id)
-        REFERENCES status(id)
+        REFERENCES statuses(id)
         ON UPDATE CASCADE
         ON DELETE RESTRICT
 );
