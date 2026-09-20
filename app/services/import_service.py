@@ -22,7 +22,7 @@ def import_projects():
 
     The database must not already contain projects.
     """
-    initialize_database()
+    # initialize_database()
 
     # Fetch data BEFORE opening the write transaction.
     statuses = fetch_statuses()

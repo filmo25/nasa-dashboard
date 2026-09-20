@@ -91,26 +91,34 @@ def techport_get(path, params=None):
 def techport_post(path, json_body):
     """
     Perform a POST request to the TechPort API.
+
+    TechPort requires a fresh nonce obtained from GET /api/nonce
+    for every POST request.
     """
-    if "Authorization" not in session.headers:
-        refresh_api_token()
 
-    url = f"{TECHPORT_BASE_URL}{path}"
-
-    response = session.post(
-        url,
-        json=json_body,
-        timeout=60,
+    # Get a fresh nonce
+    nonce_response = session.get(
+        f"{TECHPORT_BASE_URL}/nonce",
+        params={"api_key": NASA_API_KEY},
+        timeout=10,
     )
 
-    if response.status_code == 401:
-        refresh_api_token()
+    nonce_response.raise_for_status()
 
-        response = session.post(
-            url,
-            json=json_body,
-            timeout=60,
-        )
+    nonce = nonce_response.json()["nonce"]
+
+    # Build a new payload so we don't modify the caller's dictionary
+    payload = {
+        **json_body,
+        "nonce": nonce,
+    }
+
+    # Perform POST
+    response = session.post(
+        f"{TECHPORT_BASE_URL}{path}",
+        json=payload,
+        timeout=60,
+    )
 
     response.raise_for_status()
 
