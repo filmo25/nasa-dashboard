@@ -1,4 +1,4 @@
 .venv/
-# ignore .env file with the api key in /app
+# ignore .env file in /app with the api key
 app/.env
 data/*.db

@@ -1,0 +1,14 @@
+services:
+  dashboard:
+    build: .
+    container_name: nasa-dashboard
+    ports:
+      - "5000:5000"
+    volumes:
+      # Persist SQLite database to the host machine
+      - ./data:/workspace/data
+      # Hot-reloading bind mount for active development
+      - ./app:/workspace/app
+    env_file:
+      - ./app/.env
+    restart: unless-stopped
