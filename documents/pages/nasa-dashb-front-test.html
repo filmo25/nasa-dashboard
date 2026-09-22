@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>NASA Projects Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <style>
+    * { box-sizing: border-box; font-family: Arial, sans-serif; }
+    body { margin: 20px; background: #f4f7f6; }
+    
+    .controls {
+      background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px;
+      display: flex; gap: 20px; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      flex-wrap: wrap;
+    }
+    .filter-badge {
+      background: #007bff; color: white; padding: 4px 8px; border-radius: 12px;
+      font-size: 12px; margin-left: 5px;
+    }
+    
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .chart-card {
+      background: white; border-radius: 8px; padding: 15px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      /* FIX 1: Ensure the card has a minimum height */
+      min-height: 400px; 
+    }
+    .full-width { grid-column: span 2; }
+    
+    /* FIX 2: Explicitly set Width and Height for ECharts containers */
+    .chart-container { 
+      width: 100%; 
+      height: 350px; /* Hardcoded height guarantees ECharts has space to draw */
+    }
+  </style>
+</head>
+<body>
+
+  <div class="controls">
+    <label>Start: <input type="date" id="dateStart" value="2020-01-01"></label>
+    <label>End: <input type="date" id="dateEnd" value="2026-12-31"></label>
+    <button onclick="resetFilters()">Reset</button>
+    <div id="active-filters-display"></div>
+  </div>
+
+  <div class="dashboard-grid">
+    <div class="chart-card">
+      <h3>1. US States (Choropleth)</h3>
+      <div id="map-chart" class="chart-container"></div>
+    </div>
+    <div class="chart-card">
+      <h3>2. Categories (Treemap)</h3>
+      <div id="treemap-chart" class="chart-container"></div>
+    </div>
+    <div class="chart-card full-width">
+      <h3>3. Target Destinations</h3>
+      <div id="bar-chart" class="chart-container" style="height: 300px;"></div>
+    </div>
+  </div>
+
+  <script>
+    // 1. MOCK DATA
+const rawProjects = (() => {
+  const prefixes = [
+    "Artemis", "Orion", "Helios", "Ares", "Prometheus", "Europa", 
+    "Titan", "Polaris", "Aegis", "Nova", "Cygnus", "Apex", "Valkyrie", "Astro"
+  ];
+  const coreTech = [
+    "Power Grid", "AI Autonomy", "Thruster", "Shielding", "Life Support", 
+    "Thermal System", "Radar Array", "Sample Return", "Optical Comm", "Habitat"
+  ];
+
+  const destinations = ["Moon", "Mars", "Deep Space", "Europa", "LEO", "ISS", "Titan", "Asteroid Belt"];
+  const statesPool = [
+    "California", "Texas", "Florida", "Alabama", "Ohio", 
+    "Washington", "Maryland", "Colorado", "Arizona", "Virginia"
+  ];
+
+  const taxonomies = [
+    ["Power & Energy", "Energy Storage", "Batteries"],
+    ["Power & Energy", "Nuclear Systems", "Fission Surface Power"],
+    ["Power & Energy", "Solar Arrays", "Flexible Photovoltaics"],
+    ["Robotics", "Autonomy", "Path Planning"],
+    ["Robotics", "Manipulators", "Robotic Arms"],
+    ["Robotics", "Sensors", "LiDAR Mapping"],
+    ["Materials", "Nanomaterials", "Radiation Shielding"],
+    ["Materials", "Thermal Control", "Ablative Heat Shields"],
+    ["Communications", "Optical Comm", "Laser Transceivers"],
+    ["Life Support", "Environmental Control", "Water Recovery"],
+    ["Propulsion", "Electric Propulsion", "Hall Thrusters"],
+    ["Propulsion", "Chemical Propulsion", "Cryogenic Engines"]
+  ];
+
+  function randomChoice(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  function randomSample(arr, minCount, maxCount) {
+    const count = Math.floor(Math.random() * (maxCount - minCount + 1)) + minCount;
+    const shuffled = [...arr].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, count);
+  }
+
+  function formatDate(year, month, day) {
+    const m = String(month).padStart(2, '0');
+    const d = String(day).padStart(2, '0');
+    return `${year}-${m}-${d}`;
+  }
+
+  return Array.from({ length: 100 }, (_, i) => {
+    const startYear = 2020 + Math.floor(Math.random() * 7); // 2020 to 2024
+    const startMonth = Math.floor(Math.random() * 12) + 1;
+    const durationMonths = 12 + Math.floor(Math.random() * 36); // 1 to 4 years duration
+
+    const startDate = formatDate(startYear, startMonth, Math.floor(Math.random() * 28) + 1);
+
+    const endYear = startYear + Math.floor((startMonth + durationMonths) / 12);
+    const endMonth = ((startMonth + durationMonths) % 12) || 12;
+    const endDate = formatDate(endYear, endMonth, Math.floor(Math.random() * 28) + 1);
+
+    return {
+      id: i + 1,
+      name: `${randomChoice(prefixes)} ${randomChoice(coreTech)} ${i + 1}`,
+      startDate: startDate,
+      endDate: endDate,
+      states: randomSample(statesPool, 1, 3),
+      taxonomy: randomChoice(taxonomies),
+      destination: randomChoice(destinations)
+    };
+  });
+})();
+
+    const stateMap = {
+      'California': 'California', 'Texas': 'Texas', 'Florida': 'Florida', 
+      'Alabama': 'Alabama', 'Ohio': 'Ohio', 'Washington': 'Washington'
+    };
+
+    // 2. STATE
+    const state = {
+      dateStart: "2020-01-01", dateEnd: "2026-12-31",
+      selectedStates: new Set(), selectedCategory: null, selectedDestinations: new Set()
+    };
+
+    let mapChart, treemapChart, barChart;
+
+    // 3. INITIALIZATION
+    async function initDashboard() {
+      // FIX 3: Initialize charts immediately so they don't wait for the fetch to finish
+      mapChart = echarts.init(document.getElementById('map-chart'));
+      treemapChart = echarts.init(document.getElementById('treemap-chart'));
+      barChart = echarts.init(document.getElementById('bar-chart'));
+
+      try {
+        // Fetch map data - using a highly reliable CDN
+        const res = await fetch('https://code.highcharts.com/mapdata/countries/us/us-all.topo.json');
+        
+        if (!res.ok) throw new Error("Network response was not ok");
+        
+        const usaMapData = await res.json();
+        
+        // Register map. TopoJSON needs slightly different handling in ECharts, 
+        // but for simplicity, let's use a standard GeoJSON source if possible.
+        // Let's use a known good GeoJSON URL:
+        const geoRes = await fetch('https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json');
+        const usaGeoJson = await geoRes.json();
+        
+        echarts.registerMap('USA', usaGeoJson);
+      } catch (error) {
+        console.error("Failed to load map data:", error);
+        document.getElementById('map-chart').innerHTML = "Map data failed to load. Please check console.";
+      }
+
+      // Event Listeners
+      mapChart.on('click', params => {
+        if (!params.name) return;
+        state.selectedStates.has(params.name) ? state.selectedStates.delete(params.name) : state.selectedStates.add(params.name);
+        updateDashboard();
+      });
+
+      treemapChart.on('click', params => {
+        state.selectedCategory = (state.selectedCategory === params.name) ? null : params.name;
+        updateDashboard();
+      });
+
+      barChart.on('click', params => {
+        state.selectedDestinations.has(params.name) ? state.selectedDestinations.delete(params.name) : state.selectedDestinations.add(params.name);
+        updateDashboard();
+      });
+
+      document.getElementById('dateStart').addEventListener('change', e => { state.dateStart = e.value; updateDashboard(); });
+      document.getElementById('dateEnd').addEventListener('change', e => { state.dateEnd = e.value; updateDashboard(); });
+
+      updateDashboard();
+      
+      // FIX 4: Handle window resize to keep charts responsive
+      window.addEventListener('resize', () => {
+        mapChart.resize(); treemapChart.resize(); barChart.resize();
+      });
+    }
+
+    // 4. FILTER PIPELINE
+    function getFilteredProjects() {
+      return rawProjects.filter(p => {
+        const dateMatch = p.startDate <= state.dateEnd && p.endDate >= state.dateStart;
+        const stateMatch = state.selectedStates.size === 0 || p.states.some(s => state.selectedStates.has(s));
+        const categoryMatch = !state.selectedCategory || p.taxonomy.includes(state.selectedCategory);
+        const destMatch = state.selectedDestinations.size === 0 || state.selectedDestinations.has(p.destination);
+        return dateMatch && stateMatch && categoryMatch && destMatch;
+      });
+    }
+
+    // 5. UPDATE AND RENDER
+    function updateDashboard() {
+      const filtered = getFilteredProjects();
+      renderMap(filtered);
+      renderTreemap(filtered);
+      renderBarChart(filtered);
+      
+      const active = [];
+      if (state.selectedStates.size) active.push(`States: ${[...state.selectedStates].join(', ')}`);
+      if (state.selectedCategory) active.push(`Cat: ${state.selectedCategory}`);
+      if (state.selectedDestinations.size) active.push(`Dest: ${[...state.selectedDestinations].join(', ')}`);
+      document.getElementById('active-filters-display').innerHTML = active.map(f => `<span class="filter-badge">${f}</span>`).join('');
+    }
+
+    function renderMap(projects) {
+      const stateCounts = {};
+      projects.forEach(p => p.states.forEach(s => stateCounts[s] = (stateCounts[s] || 0) + 1));
+      const data = Object.keys(stateCounts).map(name => ({ name, value: stateCounts[name] }));
+
+      mapChart.setOption({
+        tooltip: { trigger: 'item' },
+        visualMap: { min: 0, max: 5, inRange: { color: ['#e0f3f8', '#08519c'] } },
+        series: [{ type: 'map', map: 'USA', data: data, selectedMode: 'multiple' }]
+      });
+    }
+
+    function renderTreemap(projects) {
+      const tree = {};
+      projects.forEach(p => {
+        const [l1, l2, l3] = p.taxonomy;
+        if (!tree[l1]) tree[l1] = {};
+        if (!tree[l1][l2]) tree[l1][l2] = {};
+        tree[l1][l2][l3] = (tree[l1][l2][l3] || 0) + 1;
+      });
+
+      const formatTree = obj => Object.keys(obj).map(key => ({
+        name: key,
+        value: typeof obj[key] === 'number' ? obj[key] : Object.values(obj[key]).reduce((a,b)=>a+b, 0),
+        children: typeof obj[key] === 'object' ? formatTree(obj[key]) : undefined
+      }));
+
+      treemapChart.setOption({
+        tooltip: { formatter: '{b}: {c}' },
+        series: [{ type: 'treemap', data: formatTree(tree), roam: false }]
+      });
+    }
+
+    function renderBarChart(projects) {
+      const destCounts = {};
+      projects.forEach(p => destCounts[p.destination] = (destCounts[p.destination] || 0) + 1);
+      const destinations = Object.keys(destCounts);
+
+      barChart.setOption({
+        tooltip: { trigger: 'axis' },
+        xAxis: { type: 'value', minInterval: 1 },
+        yAxis: { type: 'category', data: destinations },
+        series: [{
+          type: 'bar',
+          data: destinations.map(d => ({ value: destCounts[d], itemStyle: { color: state.selectedDestinations.has(d) ? '#ff7f0e' : '#2b5c8f' } }))
+        }]
+      });
+    }
+
+    function resetFilters() {
+      state.selectedStates.clear(); state.selectedCategory = null; state.selectedDestinations.clear();
+      updateDashboard();
+    }
+
+    // FIX 5: Ensure DOM is fully loaded before initializing
+    document.addEventListener("DOMContentLoaded", initDashboard);
+  </script>
+</body>
+</html>
