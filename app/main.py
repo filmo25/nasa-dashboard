@@ -1,19 +1,27 @@
+# import needed python modules
 from flask import Flask, render_template, jsonify
+# the entry point uses backend services
 import services
 
-app = Flask(__name__)
+# define "main" as the web app entry point
+main = Flask(__name__)
 
-@app.route('/', methods=['GET'])
+# http://localhost:5000/
+# render import.html
+@main.route('/', methods=['GET'])
 def index():
     return render_template('import.html')
 
-@app.route('/api/projects', methods=['POST'])
+# http://localhost:5000/api/projects
+# return json
+@main.route('/api/projects', methods=['POST'])
 def api_import_projects():
-    # Call the service orchestrator
+    # call the import projects service
     result = services.import_projects()
     
-    # Return the dictionary as a JSON response
+    # return database creation log as json
     return jsonify(result)
 
+# run main
 if __name__ == '__main__':
-    app.run(debug=True)
+    main.run(debug=True)

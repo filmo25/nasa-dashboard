@@ -8,7 +8,8 @@ load_dotenv()
 BASE_URL = "https://techport.nasa.gov"
 API_KEY = os.getenv("NASA_API_KEY", "")
 
-# Headers simulating a web browser
+# request header
+# simulating a web browser
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
     "Accept": "application/json"
@@ -21,6 +22,7 @@ def _make_request(endpoint: str, params: dict = None):
     if params is None:
         params = {}
     
+    """add "api_key=NASA_API_KEY" as a url param"""
     if API_KEY:
         params["api_key"] = API_KEY
 
@@ -49,11 +51,11 @@ def fetch_destinations():
 
 
 def fetch_nasa_pjs_attributes():
-    """
-    Orchestrates fetching of all attribute datasets.
-    """
     return {
         "statuses": fetch_status_values(),
         "technologies": fetch_technologies(),
         "destinations": fetch_destinations()
     }
+
+
+# def fetch_nasa_relevant_projects():

@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     importBtn.addEventListener("click", async () => {
         importBtn.disabled = true;
-        resultsDiv.innerText = "Importing data, please wait...";
+        resultsDiv.innerText = "Creating database and importing data, please wait...";
 
         try {
             const response = await fetch('/api/projects', {
